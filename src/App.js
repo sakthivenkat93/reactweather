@@ -3,44 +3,45 @@ import '../node_modules/bootstrap/dist/css/bootstrap.css';
 import { Button, Navbar, Form, FormControl, Nav, NavDropdown } from 'react-bootstrap';
 import React from 'react';
 import FiveDayForecastUnit from './fiveDayForecastUnit';
+import axios from 'axios';
 
-let sampleData = [
-	{
-		day: "Tue 17",
-		hign: "28°",
-		low: "26°",
-		condition: "Torrential Rainfall"
-	},
-	{
-		day: "Tue 18",
-		hign: "28°",
-		low: "26°",
-		condition: "Light Rain"
-	},
-	{
-		day: "Tue 19",
-		hign: "28°",
-		low: "26°",
-		condition: "Cloudy"
-	},
-	{
-		day: "Tue 20",
-		hign: "28°",
-		low: "26°",
-		condition: "Partly Cloudy"
-	},
-	{
-		day: "Tue 21",
-		hign: "28°",
-		low: "26°",
-		condition: "Sunny"
-	}
-];
+const baseAPIURL = 'https://api.openweathermap.org/data/2.5/forecast?';
+const apiKey = 'ebfbe6a4de4e5b57a1a899b33f678824';
 
 class App extends React.Component {
 	constructor(props){
 		super(props);
-		this.state = sampleData;
+		//axios.get('https://api.openweathermap.org/data/2.5/forecast?q=London&appid=ebfbe6a4de4e5b57a1a899b33f678824').then((response) => this.state = response.data);
+		this.state = {
+			weatherData: {
+				city: {
+					name: ''
+				},
+			},
+			units: 'metric'
+		}
+	}
+	async componentDidMount(){
+		let location;
+		function getCoordinates() {
+			return new Promise(function(resolve, reject) {
+			  navigator.geolocation.getCurrentPosition(resolve, reject);
+			});
+		}
+		location = await getCoordinates();
+		let completeURL = `${baseAPIURL}lat=${location.coords.latitude}&lon=${location.coords.longitude}&appid=${apiKey}&units=metric`;
+		axios.get(completeURL).then((response) => this.renderWeatherData(response.data));
+	}
+	renderWeatherData(data){
+		this.setState({
+			weatherData: data
+		});
+		console.log(this.state);
+	}
+	degToCompass(num) {
+		var val = Math.floor((num / 22.5) + 0.5);
+		var arr = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+		return arr[(val % 16)];
 	}
 	render() {
 		return (
@@ -61,91 +62,54 @@ class App extends React.Component {
 				</div>
 				<div className="currentInfo">
 					<div className="currentLocation">
-						Chennai, India
+						{this.state.weatherData.city.name}
 				</div>
 					<div className="currentTemperature">
 						<div className="currentTemperatureValue">
-							26
+							{this.state.weatherData.list ? this.state.weatherData.list[0].main.temp : 'Temperature'}
 					</div>
-						<div className="currentTemperatureUnit">
-							&#8451;
-					</div>
+						{this.state.units === 'metric' && <div className="currentTemperatureUnit">	&#8451;</div>}
+						{this.state.units === 'imperial' && <div className="currentTemperatureUnit">	&#8457;</div>}
 					</div>
 					<div className="currentCondition">
-						Light Drizzle
-				</div>
+						{this.state.weatherData.list ? `${this.state.weatherData.list[0].weather[0].main} - ${this.state.weatherData.list[0].weather[0].description}` : '0'}
+					</div>
 					<div className="lastTimestampContainer">
 						Last Updated at: <span className="lastTimestamp">16:15</span>
 					</div>
 					<div className="currentStatContainer">
 						<div className="feelsLike">
-							Feels Like <span className="">28&#8451;</span>
+							Feels Like <span>
+							{this.state.weatherData.list ? this.state.weatherData.list[0].main.feels_like : 'Temperature'}
+							{this.state.units === 'metric' && <span className="">	&#8451;</span>}
+							{this.state.units === 'imperial' && <span className="">	&#8457;</span>}
+							</span>
 						</div>
 						<div className="wind">
-							Wind <span className="">0mph N</span>
+							Wind {this.state.weatherData.list ? this.state.weatherData.list[0].wind.speed : '0'}
+							<span>{this.state.units === 'metric' && 'm/s'}{this.state.units === 'imperial' && 'mph'} {this.degToCompass(45)}</span>
 						</div>
 						<div className="visibility">
-							Visibility <span className="">3km</span>
+							Visibility <span>
+							{this.state.units === 'metric' && (this.state.weatherData.list ? this.state.weatherData.list[0].visibility : '0')/1000 + ' kilometers'}
+							{this.state.units === 'imperial' && (this.state.weatherData.list ? this.state.weatherData.list[0].visibility : '0')/1600 + ' miles'}
+							</span>
 						</div>
 					</div>
 					<div className="currentStatContainer">
 						<div className="barometer">
-							Barometer <span className="">1000mb</span>
+							Barometer <span>{this.state.weatherData.list ? this.state.weatherData.list[0].main.pressure : 'Pressure'}mb</span>
 						</div>
 						<div className="humidity">
-							Humidity <span className="">90%</span>
+							Humidity <span>90%</span>
 						</div>
 					</div>
 					<div className="fiveDayForecastHeader">
 						Five Day Forecast
 				</div>
 					<div className="fiveDayForecastContainer">
-						{/* <div className="fiveDayForecastUnit">
-							<div className="forecastDay">Tue 17</div>
-							<div className="forecast">
-								<img className="forecastIcon" src="weather/034-moon.svg"></img>
-							</div>
-							<div className="forecastHigh">28&#176;</div>
-							<div className="forecastLow">26&#176;</div>
-							<div className="forecastCondition">Torrential Rainfall</div>
-						</div>
-						<div className="fiveDayForecastUnit">
-							<div className="forecastDay">Tue 17</div>
-							<div className="forecast">
-								<img className="forecastIcon" src="weather/034-moon.svg"></img>
-							</div>
-							<div className="forecastHigh">28&#176;</div>
-							<div className="forecastLow">26&#176;</div>
-							<div className="forecastCondition">Torrential Rainfall</div>
-						</div>
-						<div className="fiveDayForecastUnit">
-							<div className="forecastDay">Tue 17</div>
-							<div className="forecast">
-								<img className="forecastIcon" src="weather/034-moon.svg"></img>
-							</div>
-							<div className="forecastHigh">28&#176;</div>
-							<div className="forecastLow">26&#176;</div>
-							<div className="forecastCondition">Torrential Rainfall</div>
-						</div>
-						<div className="fiveDayForecastUnit">
-							<div className="forecastDay">Tue 17</div>
-							<div className="forecast">
-								<img className="forecastIcon" src="weather/034-moon.svg"></img>
-							</div>
-							<div className="forecastHigh">28&#176;</div>
-							<div className="forecastLow">26&#176;</div>
-							<div className="forecastCondition">Torrential Rainfall</div>
-						</div>
-						<div className="fiveDayForecastUnit">
-							<div className="forecastDay">Tue 17</div>
-							<div className="forecast">
-								<img className="forecastIcon" src="weather/034-moon.svg"></img>
-							</div>
-							<div className="forecastHigh">28&#176;</div>
-							<div className="forecastLow">26&#176;</div>
-							<div className="forecastCondition">Torrential Rainfall</div>
-						</div> */}
-						{this.state.map(number => this.renderForecastDays(number))}
+						{/* {this.state.map(number => this.renderForecastDays(number))} */}
+						{/* {this.state.weatherData} */}
 					</div>
 				</div>
 			</div>
